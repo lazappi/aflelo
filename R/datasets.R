@@ -49,3 +49,11 @@
 #     as.data.frame()
 #' ```
 "matches"
+
+#' Distances
+#'
+#' Distances between teams and grounds
+#'
+#' @format `distances` is a matrix containing the great circle distance in
+#' kilometres between the home city of AFL teams and the city of AFL grounds
+"distances"
