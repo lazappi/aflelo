@@ -6,17 +6,6 @@
 \title{Matches}
 \format{\code{matches} is a data.frame containing the details of AFL matches from
 the 2000 season onwards obtained from afltables.com}
-\source{
-\preformatted{library(tidyverse)
-url <- "https://afltables.com/afl/stats/biglists/bg3.txt"
-matches_raw <- read_table(url, skip = 2, col_names = FALSE,
-                          col_types = cols(
-                              .default = col_character(),
-                              X1       = col_double()
-                         ))
-
-}
-}
 \usage{
 matches
 }
