@@ -24,6 +24,7 @@ new_aflelo_params <- function(new_team_rating = 1090,
 
 
 validate_aflelo_params <- function(params) {
+    checkmate::assert_class(params, "aflelo_params")
     checkmate::assert_number(params$new_team_rating, lower = 0, finite = TRUE)
     checkmate::assert_number(params$new_season_adjustment, lower = 0, upper = 1)
     checkmate::assert_number(params$hga_alpha, lower = 0, finite = TRUE)
@@ -51,4 +52,52 @@ aflelo_params <- function(...) {
     }
 
     validate_aflelo_params(params)
+}
+
+
+print.aflelo_params <- function(x, compact = FALSE, ...) {
+
+    if (compact) {
+        cat(crayon::bold("New team\t"), "Rating:", x$new_team_rating,
+            "\n")
+        cat(crayon::bold("New season\t"),
+            "Adjustment:", x$new_season_adjustment,
+            "\n")
+        cat(crayon::bold("Home ground \t"), "Alpha:", x$hga_alpha,
+                                            "Beta:", x$hga_beta,
+            "\n")
+        cat(crayon::bold("Prediction\t"), "m:", x$pred_m,
+                                          "p:", x$pred_p,
+            "\n")
+        cat(crayon::bold("Adjustment\t"), "k:", x$adjust_k,
+            "\n")
+        cat(crayon::bold("Simulation\t"), "Sigma:", x$sim_sigma)
+    } else {
+        cat("AFLELO Parameters", "\n")
+
+        cat(crayon::bold("New team"), "\n")
+        cat("Rating:", x$new_team_rating, "\n")
+        cat("\n")
+
+        cat(crayon::bold("New season"), "\n")
+        cat("Adjustment:", x$new_season_adjustment, "\n")
+        cat("\n")
+
+        cat(crayon::bold("Home ground advantage"), "\n")
+        cat(paste0("Alpha: ", x$hga_alpha, ", Beta: ", x$hga_beta), "\n")
+        cat("\n")
+
+        cat(crayon::bold("Predictions"), "\n")
+        cat(paste0("m: ", x$pred_m, ", p: ", x$pred_p), "\n")
+        cat("\n")
+
+        cat(crayon::bold("Rating adjustments"), "\n")
+        cat(paste0("k: ", x$adjust_k), "\n")
+        cat("\n")
+
+        cat(crayon::bold("Simulations"), "\n")
+        cat(paste0("Sigma: ", x$sim_sigma), "\n")
+        cat("\n")
+    }
+
 }
