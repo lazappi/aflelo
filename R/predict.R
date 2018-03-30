@@ -24,7 +24,58 @@ calc_hga <- function(model, home, away, ground) {
 
     hga <- (model$params$hga_alpha * travel) + (model$params$hga_beta * exp)
 
-    print(c(home_exp, away_exp, exp, home_dist, away_dist, travel, hga))
-
     return(hga)
+}
+
+
+predict_result <- function(model, home, away, ground) {
+    checkmate::assert_class(model, "aflelo_model")
+    checkmate::assert_character(home, len = 1)
+    checkmate::assert_character(away, len = 1)
+    checkmate::assert_character(ground, len = 1)
+
+    hga <- calc_hga(model, home, away, ground)
+
+    home_rating <- model$ratings$Rating[model$ratings$Team == home]
+    away_rating <- model$ratings$Rating[model$ratings$Team == away]
+
+    m <- model$params$pred_m
+    pred_result <- 1 / (10 ^ ((-(home_rating - away_rating + hga) / m)) + 1)
+
+    return(pred_result)
+}
+
+
+predict_margin <- function(model, pred_result) {
+    checkmate::assert_class(model, "aflelo_model")
+    checkmate::assert_number(pred_result, lower = 0, upper = 1)
+
+    pred_margin <- -log((1 - pred_result) / pred_result) / model$params$pred_p
+
+    return(pred_margin)
+}
+
+
+convert_result <- function(model, real_margin) {
+    checkmate::assert_class(model, "aflelo_model")
+    checkmate::assert_number(real_margin)
+
+    real_result <- 1 / (1 + exp(-model$params$pred_p * real_margin))
+
+    return(real_result)
+}
+
+
+calc_new_rating <- function(model, team, real_result, pred_result) {
+    checkmate::assert_class(model, "aflelo_model")
+    checkmate::assert_character(team, len = 1)
+    checkmate::assert_number(real_result, lower = 0, upper = 1)
+    checkmate::assert_number(pred_result, lower = 0, upper = 1)
+
+    old_rating <- model$ratings$Rating[model$ratings$Team == team]
+
+    new_rating <- old_rating + model$params$adjust_k *
+        (real_result - pred_result)
+
+    return(new_rating)
 }
