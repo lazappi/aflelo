@@ -1,5 +1,5 @@
-new_aflelo_match <- function(season, round, home, away, ground, predicted,
-                             margin) {
+new_aflelo_match <- function(season, round, home, away, ground, pred_margin,
+                             real_margin) {
 
     structure(
         list(
@@ -8,8 +8,8 @@ new_aflelo_match <- function(season, round, home, away, ground, predicted,
             home = home,
             away = away,
             ground = ground,
-            predicted = predicted,
-            margin = margin
+            pred_margin = pred_margin,
+            real_margin = real_margin
         ),
         class = "aflelo_match"
     )
@@ -24,17 +24,17 @@ validate_aflelo_match <- function(match) {
     checkmate::assert_character(match$home, len = 1)
     checkmate::assert_character(match$away, len = 1)
     checkmate::assert_character(match$ground, len = 1)
-    checkmate::assert_number(match$predicted)
-    checkmate::assert_number(match$margin)
+    checkmate::assert_number(match$pred_margin)
+    checkmate::assert_number(match$real_margin)
 
     return(match)
 }
 
-aflelo_match <- function(season, round, home, away, ground, predicted,
-                         margin) {
+aflelo_match <- function(season, round, home, away, ground, pred_margin,
+                         real_margin) {
 
-    match <- new_aflelo_match(season, round, home, away, ground, predicted,
-                              margin)
+    match <- new_aflelo_match(season, round, home, away, ground, pred_margin,
+                              real_margin)
 
     validate_aflelo_match(match)
 }
@@ -49,20 +49,20 @@ print.aflelo_match <- function(x, ...) {
         crayon::bold("at"), x$ground, "\n")
 
     cat(crayon::bold("Predicted result: "))
-    if (x$predicted > 0) {
-        cat(crayon::green(x$home), "by", crayon::green(x$predicted), "pts")
-    } else if (x$predicted < 0) {
-        cat(crayon::red(x$away), "by", crayon::red(-x$predicted), "pts")
+    if (x$pred_margin > 0) {
+        cat(crayon::green(x$home), "by", crayon::green(x$pred_margin), "pts")
+    } else if (x$pred_margin < 0) {
+        cat(crayon::red(x$away), "by", crayon::red(-x$pred_margin), "pts")
     } else {
         cat("Draw")
     }
     cat("\n")
 
     cat(crayon::bold("Actual result: "))
-    if (x$margin > 0) {
-        cat(crayon::green(x$home), "by", crayon::green(x$margin), "pts")
-    } else if (x$margin < 0) {
-        cat(crayon::red(x$away), "by", crayon::red(-x$actual), "pts")
+    if (x$real_margin > 0) {
+        cat(crayon::green(x$home), "by", crayon::green(x$real_margin), "pts")
+    } else if (x$real_margin < 0) {
+        cat(crayon::red(x$away), "by", crayon::red(-x$real_margin), "pts")
     } else {
         cat("Draw")
     }

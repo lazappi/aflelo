@@ -7,14 +7,17 @@ new_aflelo_model <- function(params = new_aflelo_params()) {
 
     utils::data("distances", package = "aflelo", envir = environment())
 
+    rating_history <- matrix(, nrow = 16, ncol = 0, dimnames = list(teams))
+    mode(rating_history) <- "numeric"
+
     structure(
         list(
             params = params,
             ratings = ratings,
             season = 2000,
+            round = "Preseason",
             distances = distances,
-            rating_history = matrix(ratings$Rating,
-                                    dimnames = list(teams, "Initial")),
+            rating_history = rating_history,
             match_history = data.frame(Season    = character(),
                                        Round     = character(),
                                        HomeTeam  = character(),
@@ -34,6 +37,7 @@ validate_aflelo_model <- function(model) {
     validate_aflelo_params(model$params)
     checkmate::assert_data_frame(model$ratings, ncol = 2)
     checkmate::assert_int(model$season, 2000)
+    checkmate::assert_character(model$round, len = 1)
     checkmate::assert_matrix(model$distances, mode = "numeric",
                              any.missing = FALSE)
     checkmate::assert_matrix(model$rating_history, nrows = nrow(model$ratings),
@@ -69,20 +73,22 @@ print.aflelo_model <- function(x, ...) {
     print(x$params, compact = TRUE)
     cat("\n\n")
 
-    cat(crayon::bold("Season"), x$season, "\n\n")
+    cat(crayon::bold("Season:"), x$season, crayon::bold("Round:"), x$round,
+        "\n\n")
 
     ratings <- x$ratings
     ratings$Rating <- round(ratings$Rating)
+    ratings$RatingStr <- ratings$Rating
     ratings$Gap <- (max(nchar(ratings$Team)) + 2) - nchar(ratings$Team)
     is_pos <- ratings$Rating > 1500
-    ratings$Rating[is_pos] <- crayon::green(ratings$Rating[is_pos])
+    ratings$RatingStr[is_pos] <- crayon::green(ratings$Rating[is_pos])
     is_neg <- ratings$Rating < 1500
-    ratings$Rating[is_neg] <- crayon::red(ratings$Rating[is_neg])
+    ratings$RatingStr[is_neg] <- crayon::red(ratings$Rating[is_neg])
 
     cat(crayon::bold("Ratings"), "\n")
     for (i in seq_len(nrow(ratings))) {
         cat(ratings[i, "Team"], strrep(" ", ratings[i, "Gap"]),
-            ratings[i, "Rating"], "\n")
+            ratings[i, "RatingStr"], "\n")
     }
     cat("\n")
 
@@ -104,7 +110,6 @@ print.aflelo_model <- function(x, ...) {
 
 update_ratings <- function(model, new_ratings) {
     checkmate::assert_class(model, "aflelo_model")
-    checkmate::check_character(round, len = 1)
     checkmate::assert_numeric(new_ratings, lower = 0, finite = TRUE,
                               any.missing = FALSE, len = nrow(model$ratings))
 
@@ -116,14 +121,31 @@ update_ratings <- function(model, new_ratings) {
 }
 
 
-update_rating_history <- function(model, round) {
+update_rating <- function(model, team, new_rating) {
     checkmate::assert_class(model, "aflelo_model")
-    checkmate::check_character(round, len = 1)
+    checkmate::check_character(team, len = 1)
+    checkmate::assert_number(new_rating, lower = 0, finite = TRUE)
 
+    team_idx <- which(model$ratings$Team == team)
+    model$ratings$Rating[team_idx] <- new_rating
+
+    model$ratings <- model$ratings[order(model$ratings$Rating,
+                                         decreasing = TRUE), ]
+
+    validate_aflelo_model(model)
+}
+
+
+update_rating_history <- function(model) {
+    checkmate::assert_class(model, "aflelo_model")
+
+    ratings <- model$ratings$Rating
+    names(ratings) <- model$ratings$Team
     history_names <- colnames(model$rating_history)
-    model$rating_history <- cbind(model$rating_history, model$ratings$Rating)
+    model$rating_history <- cbind(model$rating_history,
+                                  ratings[rownames(model$rating_history)])
     colnames(model$rating_history) <- c(history_names,
-                                        paste0(round, model$season))
+                                        paste0(model$round, model$season))
 
     validate_aflelo_model(model)
 }
@@ -155,6 +177,8 @@ add_team  <- function(model, team) {
 new_season <- function(model) {
     checkmate::assert_class(model, "aflelo_model")
 
+    model <- update_rating_history(model)
+
     new_season <- model$season + 1
     model$season <- new_season
 
@@ -173,7 +197,46 @@ new_season <- function(model) {
         model <- add_team(model, "GW Sydney")
     }
 
-    model <- update_rating_history(model, "Preseason")
+    model$round <- "Preseason"
+    model <- update_rating_history(model)
+
+    validate_aflelo_model(model)
+}
+
+
+add_match <- function(model, match) {
+
+
+    if (match$season > model$season) {
+        model <- new_season(model)
+        model$round <- match$round
+    }
+
+    match_round <- match$round
+    if (match_round != model$round) {
+        model <- update_rating_history(model)
+        model$round <- match_round
+    }
+
+    pred_result <- convert_margin(model, match$pred_margin)
+    real_result <- convert_margin(model, match$real_margin)
+
+    new_home_rating <- calc_new_rating(model, match$home, real_result,
+                                       pred_result)
+    new_away_rating <- calc_new_rating(model, match$away, 1 - real_result,
+                                       1 - pred_result)
+
+    model <- update_rating(model, match$home, new_home_rating)
+    model <- update_rating(model, match$away, new_away_rating)
+
+    model$match_history <- rbind(model$match_history,
+                                 data.frame(Season = model$season,
+                                            Round = model$round,
+                                            HomeTeam = match$home,
+                                            AwayTeam = match$away,
+                                            Ground = match$ground,
+                                            Predicted = match$pred_margin,
+                                            Margin = match$real_margin))
 
     validate_aflelo_model(model)
 }

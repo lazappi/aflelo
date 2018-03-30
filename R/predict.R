@@ -56,13 +56,13 @@ predict_margin <- function(model, pred_result) {
 }
 
 
-convert_result <- function(model, real_margin) {
+convert_margin <- function(model, margin) {
     checkmate::assert_class(model, "aflelo_model")
-    checkmate::assert_number(real_margin)
+    checkmate::assert_number(margin)
 
-    real_result <- 1 / (1 + exp(-model$params$pred_p * real_margin))
+    result <- 1 / (1 + exp(-model$params$pred_p * margin))
 
-    return(real_result)
+    return(result)
 }
 
 
