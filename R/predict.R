@@ -65,17 +65,3 @@ convert_margin <- function(model, margin) {
     return(result)
 }
 
-
-calc_new_rating <- function(model, team, real_result, pred_result) {
-    checkmate::assert_class(model, "aflelo_model")
-    checkmate::assert_character(team, len = 1)
-    checkmate::assert_number(real_result, lower = 0, upper = 1)
-    checkmate::assert_number(pred_result, lower = 0, upper = 1)
-
-    old_rating <- model$ratings$Rating[model$ratings$Team == team]
-
-    new_rating <- old_rating + model$params$adjust_k *
-        (real_result - pred_result)
-
-    return(new_rating)
-}
