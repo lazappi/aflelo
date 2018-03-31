@@ -30,7 +30,7 @@ matches <- matches_raw %>%
     mutate_at(c("Season", "HomeGoals", "HomeBehinds", "HomeTotal",
                 "AwayGoals", "AwayBehinds", "AwayTotal"), as.integer) %>%
     select(Date, Season, everything(), -ID) %>%
-    filter(Season >= 1997) %>%
+    filter(Season >= 1997, Season <= 2017) %>%
     as.data.frame()
 
 use_data(matches, overwrite = TRUE)
