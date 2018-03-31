@@ -1,8 +1,14 @@
-simulate_matches <- function(model, matches, n = 10000, n_cores = 1) {
+simulate_matches <- function(model, matches, n = 10000, n_cores = 1, seed = 1) {
+
+    set.seed(seed)
 
     `%dopar%` <- foreach::`%dopar%`
 
-    doParallel::registerDoParallel(cores = n_cores)
+    cl <- snow::makeCluster(n_cores)
+    doSNOW::registerDoSNOW(cl)
+    pb <- txtProgressBar(max = n, style = 3)
+    progress <- function(n) setTxtProgressBar(pb, n)
+    opts <- list(progress = progress)
 
     sim_ratings <- foreach::foreach(seq_len(n), .combine = cbind,
                                     .export = c("new_season",
@@ -21,17 +27,13 @@ simulate_matches <- function(model, matches, n = 10000, n_cores = 1) {
                                                 "convert_margin",
                                                 "calc_new_rating",
                                                 "update_rating"),
-                                    .verbose = TRUE) %dopar% {
-
-    #sim_ratings <- sapply(seq_len(n), function(i) {
+                                    .options.snow = opts) %dopar% {
 
         sim_model <- model
 
         for (j in seq_len(nrow(matches))) {
 
             match_row <- matches[j, ]
-
-            print(match_row)
 
             home   <- match_row$HomeTeam
             away   <- match_row$AwayTeam
@@ -70,10 +72,11 @@ simulate_matches <- function(model, matches, n = 10000, n_cores = 1) {
 
         ratings <- sim_model$rating_history[, ncol(sim_model$rating_history)]
 
-        #return(ratings)
         ratings
     }
-    #)
+
+    close(pb)
+    snow::stopCluster(cl)
 
     return(sim_ratings)
 }

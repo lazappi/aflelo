@@ -6,7 +6,7 @@ train_model <- function(model, matches) {
 
         home   <- match_row$HomeTeam
         away   <- match_row$AwayTeam
-        gound  <- match_row$Ground
+        ground  <- match_row$Ground
         season <- match_row$Season
         round  <- match_row$Round
 
