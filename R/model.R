@@ -14,7 +14,7 @@ new_aflelo_model <- function(params = new_aflelo_params()) {
         list(
             params = params,
             ratings = ratings,
-            season = 2000,
+            season = 1997,
             round = "Preseason",
             distances = distances,
             rating_history = rating_history,

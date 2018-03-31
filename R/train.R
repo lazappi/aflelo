@@ -12,7 +12,7 @@ train_model <- function(model, matches) {
 
         if (season > model$season) {
             model <- new_season(model)
-            model$round <- match$round
+            model$round <- round
         }
 
         if (round != model$round) {
@@ -51,7 +51,7 @@ add_match <- function(model, match) {
     match_round <- match$round
     if (match_round != model$round) {
         model <- update_rating_history(model)
-        model$round <- match_round
+        model$round <- match$round
     }
 
     pred_result <- convert_margin(model, match$pred_margin)
