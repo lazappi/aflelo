@@ -1,9 +1,9 @@
 #' Matches
 #'
-#' Details of AFL matches from the 2000 season onwards
+#' Details of AFL matches
 #'
 #' @format `matches` is a data.frame containing the details of AFL matches from
-#' the 2000 season onwards obtained from afltables.com
+#' the 1997 season to the end of the 2017 seaons, obtained from afltables.com
 #'
 #' @details Some changes have been made to what is available on afltables.com:
 #'
