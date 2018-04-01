@@ -35,23 +35,8 @@ simulate_matches <- function(model, matches, n = 10000, n_cores = 1, seed = 1) {
     progress <- function(n) utils::setTxtProgressBar(pb, n)
     opts <- list(progress = progress)
 
-    sim_ratings <- foreach::foreach(seq_len(n), .combine = cbind,
-                                    .export = c("new_season",
-                                                "update_rating_history",
-                                                "validate_aflelo_model",
-                                                "validate_aflelo_params",
-                                                "validate_aflelo_match",
-                                                "new_aflelo_match",
-                                                "update_ratings",
-                                                "predict_result",
-                                                "predict_margin",
-                                                "calc_hga",
-                                                "aflelo_match",
-                                                "add_team",
-                                                "add_match",
-                                                "convert_margin",
-                                                "calc_new_rating",
-                                                "update_rating"),
+    sim_ratings <- foreach::foreach(seq_len(n),
+                                    .packages = "aflelo",
                                     .options.snow = opts) %dopar% {
 
         sim_model <- model
