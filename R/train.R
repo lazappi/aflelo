@@ -20,7 +20,6 @@ train_model <- function(model, matches) {
             model$round <- round
         }
 
-        real_margin <- match_row$HomeTotal - match_row$AwayTotal
         pred_result <- predict_result(model, home, away, ground)
 
         pred_margin <- predict_margin(model, pred_result)
@@ -31,7 +30,8 @@ train_model <- function(model, matches) {
                               away        = away,
                               ground      = ground,
                               pred_margin = pred_margin,
-                              real_margin = real_margin)
+                              home_total  = match_row$HomeTotal,
+                              away_total  = match_row$AwayTotal)
 
         model <- add_match(model, match)
     }
@@ -42,14 +42,12 @@ train_model <- function(model, matches) {
 
 add_match <- function(model, match) {
 
-
     if (match$season > model$season) {
         model <- new_season(model)
         model$round <- match$round
     }
 
-    match_round <- match$round
-    if (match_round != model$round) {
+    if (match$round != model$round) {
         model <- update_rating_history(model)
         model$round <- match$round
     }
@@ -62,8 +60,28 @@ add_match <- function(model, match) {
     new_away_rating <- calc_new_rating(model, match$away, 1 - real_result,
                                        1 - pred_result)
 
-    model <- update_rating(model, match$home, new_home_rating)
-    model <- update_rating(model, match$away, new_away_rating)
+    home_points <- 0
+    away_points <- 0
+    if (!(match$round %in% c("QF", "EF", "SF", "PF", "GF"))) {
+        home_total <- match$home_total
+        away_total <- match$away_total
+        if (match$real_margin > 0) {
+            home_points <- 4
+        } else if (match$real_margin < 0) {
+            away_points <- 4
+        } else if(match$real_margin == 0) {
+            home_points <- 2
+            away_points <- 2
+        }
+    } else {
+        home_total <- 0
+        away_total <- 0
+    }
+
+    model <- update_rating(model, match$home, new_home_rating, home_points,
+                           home_total, away_total)
+    model <- update_rating(model, match$away, new_away_rating, away_points,
+                           away_total, home_total)
 
     model$match_history <- rbind(model$match_history,
                                  data.frame(Season = model$season,

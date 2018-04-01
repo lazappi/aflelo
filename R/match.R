@@ -1,5 +1,5 @@
 new_aflelo_match <- function(season, round, home, away, ground, pred_margin,
-                             real_margin) {
+                             real_margin, home_total, away_total) {
 
     structure(
         list(
@@ -9,7 +9,9 @@ new_aflelo_match <- function(season, round, home, away, ground, pred_margin,
             away = away,
             ground = ground,
             pred_margin = pred_margin,
-            real_margin = real_margin
+            real_margin = real_margin,
+            home_total = home_total,
+            away_total = away_total
         ),
         class = "aflelo_match"
     )
@@ -26,15 +28,19 @@ validate_aflelo_match <- function(match) {
     checkmate::assert_character(match$ground, len = 1)
     checkmate::assert_number(match$pred_margin)
     checkmate::assert_number(match$real_margin)
+    checkmate::assert_int(match$home_total, lower = 0)
+    checkmate::assert_int(match$away_total, lower = 0)
 
     return(match)
 }
 
 aflelo_match <- function(season, round, home, away, ground, pred_margin,
-                         real_margin) {
+                         home_total, away_total) {
+
+    real_margin <- home_total - away_total
 
     match <- new_aflelo_match(season, round, home, away, ground, pred_margin,
-                              real_margin)
+                              real_margin, home_total, away_total)
 
     validate_aflelo_match(match)
 }
@@ -59,6 +65,8 @@ print.aflelo_match <- function(x, ...) {
     cat("\n")
 
     cat(crayon::bold("Actual result: "))
+    cat(crayon::green(x$home), x$home_total,
+        crayon::red(x$away), paste0(x$away_total, ", "))
     if (x$real_margin > 0) {
         cat(crayon::green(x$home), "by", crayon::green(x$real_margin), "pts")
     } else if (x$real_margin < 0) {

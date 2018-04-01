@@ -54,8 +54,16 @@ simulate_matches <- function(model, matches, n = 10000, n_cores = 1, seed = 1) {
             pred_result <- predict_result(sim_model, home, away, ground)
             pred_margin <- predict_margin(sim_model, pred_result)
 
-            real_margin <- rnorm(1, mean = pred_margin,
-                                 sd = sim_model$params$sim_sigma)
+            real_margin <- round(rnorm(1, mean = pred_margin,
+                                       sd = sim_model$params$sim_sigma))
+
+            home_total <- 75
+            away_total <- 75
+            if (real_margin > 0) {
+                home_total <- 75 + real_margin
+            } else if (real_margin < 0) {
+                away_total <- 75 + (-real_margin)
+            }
 
             match <- aflelo_match(season      = season,
                                   round       = round,
@@ -63,16 +71,13 @@ simulate_matches <- function(model, matches, n = 10000, n_cores = 1, seed = 1) {
                                   away        = away,
                                   ground      = ground,
                                   pred_margin = pred_margin,
-                                  real_margin = real_margin)
+                                  home_total  = home_total,
+                                  away_total  = away_total)
 
             sim_model <- add_match(sim_model, match)
         }
 
-        sim_model <- update_rating_history(sim_model)
-
-        ratings <- sim_model$rating_history[, ncol(sim_model$rating_history)]
-
-        ratings
+        sim_model$ratings
     }
 
     close(pb)
