@@ -1,12 +1,22 @@
+#' New AFLELO Model
+#'
+#' Create a new AFLELO Model
+#'
+#' @param params aflelo_params object containing parameters for the model
+#'
+#' @return An aflelo_model object
 new_aflelo_model <- function(params = new_aflelo_params()) {
+
+    distances <- NA
+    matches <- NA
+    utils::data("distances", package = "aflelo", envir = environment())
+    utils::data("matches", package = "aflelo", envir = environment())
 
     teams <- sort(unique(matches$HomeTeam)[1:16])
 
     ratings <- data.frame(Team = teams, Rating = 1500, Points = 0, PtsFor = 0,
                           PtsAgainst = 0, Percentage = 0,
                           stringsAsFactors = FALSE)
-
-    utils::data("distances", package = "aflelo", envir = environment())
 
     rating_history <- matrix(, nrow = 16, ncol = 0, dimnames = list(teams))
     mode(rating_history) <- "numeric"
@@ -33,6 +43,13 @@ new_aflelo_model <- function(params = new_aflelo_params()) {
 }
 
 
+#' Validate AFLELO Model
+#'
+#' Validate an AFLELO Model object
+#'
+#' @param model The aflelo_model to validate
+#'
+#' @return Raises an error if invalid, otherwise returns the aflelo_model
 validate_aflelo_model <- function(model) {
     checkmate::assert_class(model, "aflelo_model")
     validate_aflelo_params(model$params)
@@ -49,6 +66,18 @@ validate_aflelo_model <- function(model) {
 }
 
 
+#' AFLELO Model
+#'
+#' Object for storing information about the AFLELO Model
+#'
+#' @param params aflelo_params object containing parameters for the model
+#' @param ... Any other parts of the model to set
+#'
+#' @return A valid aflelo_model object
+#' @examples
+#' model <- aflelo_model()
+#'
+#' @export
 aflelo_model <- function(params = new_aflelo_params(), ...) {
 
     model <- new_aflelo_model(params = params)
@@ -67,6 +96,14 @@ aflelo_model <- function(params = new_aflelo_params(), ...) {
 }
 
 
+#' Print AFLELO Model
+#'
+#' Print an AFLELO Model
+#'
+#' @param x aflelo_model object to print
+#' @param ... additional arguments, not used
+#'
+#' @return Prints object
 print.aflelo_model <- function(x, ...) {
     cat("AFLELO Model", "\n\n")
 
@@ -112,6 +149,17 @@ print.aflelo_model <- function(x, ...) {
 }
 
 
+#' Update ratings
+#'
+#' Update the ratings for teams in an AFLELO Model
+#'
+#' @param model aflelo_model to update
+#' @param new_ratings vector of new ratings
+#'
+#' @return aflelo_model with updated ratings
+#' @examples
+#' model <- aflelo_model()
+#' aflelo:::update_ratings(model, rep(1600, 16))
 update_ratings <- function(model, new_ratings) {
     checkmate::assert_class(model, "aflelo_model")
     checkmate::assert_numeric(new_ratings, lower = 0, finite = TRUE,
@@ -123,6 +171,21 @@ update_ratings <- function(model, new_ratings) {
 }
 
 
+#' Update rating
+#'
+#' Update rating information for a single team in an AFLELO Model
+#'
+#' @param model aflelo_model to update
+#' @param team name of team to update
+#' @param new_rating new rating value
+#' @param points number of premiership points to add
+#' @param pts_for number of points scored by the team
+#' @param pts_against number of points scored against the team
+#'
+#' @return afelo_object with updated rating
+#' @examples
+#' model <- aflelo_model()
+#' aflelo:::update_rating(model, "Richmond", 1600, 4, 110, 100)
 update_rating <- function(model, team, new_rating, points, pts_for,
                           pts_against) {
     checkmate::assert_class(model, "aflelo_model")
@@ -146,6 +209,16 @@ update_rating <- function(model, team, new_rating, points, pts_for,
 }
 
 
+#' Update rating history
+#'
+#' Add the current ratings to the rating history
+#'
+#' @param model aflelo_model to update
+#'
+#' @return aflelo_model with updated rating history
+#' @examples
+#' model <- aflelo_model()
+#' aflelo:::update_rating_history(model)
 update_rating_history <- function(model) {
     checkmate::assert_class(model, "aflelo_model")
 
@@ -161,6 +234,17 @@ update_rating_history <- function(model) {
 }
 
 
+#' Add team
+#'
+#' Add a new team to an AFLELO Model
+#'
+#' @param model aflelo_model to add team to
+#' @param team name of the new team to add
+#'
+#' @return aflelo_model with new team
+#' @examples
+#' model <- aflelo_model()
+#' aflelo:::add_team(model, "Gold Coast")
 add_team  <- function(model, team) {
     checkmate::assert_class(model, "aflelo_model")
     checkmate::assert_character(team, len = 1)
@@ -188,6 +272,16 @@ add_team  <- function(model, team) {
 }
 
 
+#' New season
+#'
+#' Start a new season in an AFLELO Model
+#'
+#' @param model aflelo_model to start new season in
+#'
+#' @return aflelo_model at beginning of new season
+#' @examples
+#' model <- aflelo_model()
+#' aflelo:::new_season(model)
 new_season <- function(model) {
     checkmate::assert_class(model, "aflelo_model")
 

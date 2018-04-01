@@ -1,3 +1,17 @@
+#' Calculate Home Ground Advantage
+#'
+#' Calculate the Home Ground Advantage between two teams playing at a particular
+#' ground
+#'
+#' @param model aflelo_model object
+#' @param home name of the home team
+#' @param away name of the away team
+#' @param ground name of the ground
+#'
+#' @return Value giving the advantage of the home team in ratings points
+#' @examples
+#' model <- aflelo_model()
+#' aflelo:::calc_hga(model, "West Coast", "Collingwood", "Subiaco")
 calc_hga <- function(model, home, away, ground) {
     checkmate::assert_class(model, "aflelo_model")
     checkmate::assert_character(home, len = 1)
@@ -28,6 +42,19 @@ calc_hga <- function(model, home, away, ground) {
 }
 
 
+#' Predict result
+#'
+#' Predict the result of a match between two teams at a particular ground
+#'
+#' @param model afelo_model object
+#' @param home name of the home team
+#' @param away name of the away team
+#' @param ground name of the ground
+#'
+#' @return Probability of victory for the home team
+#' @examples
+#' model <- aflelo_model()
+#' aflelo:::predict_result(model, "Brisbane", "Western Bulldogs", "Gabba")
 predict_result <- function(model, home, away, ground) {
     checkmate::assert_class(model, "aflelo_model")
     checkmate::assert_character(home, len = 1)
@@ -46,6 +73,19 @@ predict_result <- function(model, home, away, ground) {
 }
 
 
+#' Predict margin
+#'
+#' Convert a predicted result to a predicted margin
+#'
+#' @param model aflelo_model object
+#' @param pred_result probablilty of home win
+#'
+#' @return Margin for the home team
+#' @examples
+#' model <- aflelo_model()
+#' pred_result <- aflelo:::predict_result(model, "Brisbane", "Western Bulldogs",
+#'                         "Gabba")
+#' aflelo:::predict_margin(model, pred_result)
 predict_margin <- function(model, pred_result) {
     checkmate::assert_class(model, "aflelo_model")
     checkmate::assert_number(pred_result, lower = 0, upper = 1)
@@ -56,6 +96,17 @@ predict_margin <- function(model, pred_result) {
 }
 
 
+#' Convert margin
+#'
+#' Convert a real margin to a result probabilty
+#'
+#' @param model aflelo_model object
+#' @param margin real margin for the home team
+#'
+#' @return Probability of the home team winning
+#' @examples
+#' model <- aflelo_model()
+#' aflelo:::convert_margin(model, 30)
 convert_margin <- function(model, margin) {
     checkmate::assert_class(model, "aflelo_model")
     checkmate::assert_number(margin)
@@ -64,4 +115,3 @@ convert_margin <- function(model, margin) {
 
     return(result)
 }
-

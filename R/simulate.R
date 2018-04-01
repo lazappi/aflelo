@@ -1,4 +1,29 @@
+#' Simulate matches
+#'
+#' Simulate a series of AFL matches
+#'
+#' @param model trained aflelo_model object
+#' @param matches data.frame containg matches to simulate, see [matches] for an
+#'        example
+#' @param n number of times to run the simulation
+#' @param n_cores number of cores to use
+#' @param seed random seed set before beginning simulations
+#'
+#' @return Ratings for teams at the end of each simulation
+#' @examples
+#' data("matches")
+#' matches1997 <- matches[matches$Season == 1997, ]
+#' model <- aflelo_model()
+#' simulate_matches(model, matches1997, n = 1)
+#'
+#' @export
 simulate_matches <- function(model, matches, n = 10000, n_cores = 1, seed = 1) {
+
+    checkmate::assert_class(model, "aflelo_model")
+    checkmate::assert_data_frame(matches, min.rows = 1)
+    checkmate::assert_int(n, lower = 1)
+    checkmate::assert_int(n_cores, lower = 1)
+    checkmate::assert_number(seed)
 
     set.seed(seed)
 
@@ -6,8 +31,8 @@ simulate_matches <- function(model, matches, n = 10000, n_cores = 1, seed = 1) {
 
     cl <- snow::makeCluster(n_cores)
     doSNOW::registerDoSNOW(cl)
-    pb <- txtProgressBar(max = n, style = 3)
-    progress <- function(n) setTxtProgressBar(pb, n)
+    pb <- utils::txtProgressBar(max = n, style = 3)
+    progress <- function(n) utils::setTxtProgressBar(pb, n)
     opts <- list(progress = progress)
 
     sim_ratings <- foreach::foreach(seq_len(n), .combine = cbind,
@@ -54,8 +79,8 @@ simulate_matches <- function(model, matches, n = 10000, n_cores = 1, seed = 1) {
             pred_result <- predict_result(sim_model, home, away, ground)
             pred_margin <- predict_margin(sim_model, pred_result)
 
-            real_margin <- round(rnorm(1, mean = pred_margin,
-                                       sd = sim_model$params$sim_sigma))
+            real_margin <- round(stats::rnorm(1, mean = pred_margin,
+                                              sd = sim_model$params$sim_sigma))
 
             home_total <- 75
             away_total <- 75

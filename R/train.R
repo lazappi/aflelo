@@ -1,4 +1,23 @@
+#' Traing AFLELO Model
+#'
+#' Train an AFLELO Model
+#'
+#' @param model aflelo_model object
+#' @param matches data.frame containg matche results to train using, see
+#'        [matches] for an example
+#'
+#' @return aflelo_model with ratings history based on the provided matches
+#' @examples
+#' data("matches")
+#' matches1997 <- matches[matches$Season == 1997, ]
+#' model <- aflelo_model()
+#' train_model(model, matches1997)
+#'
+#' @export
 train_model <- function(model, matches) {
+
+    checkmate::assert_class(model, "aflelo_model")
+    checkmate::assert_data_frame(matches, min.rows = 1)
 
     for (i in seq_len(nrow(matches))) {
 
@@ -40,7 +59,24 @@ train_model <- function(model, matches) {
 
 }
 
+
+#' Add match
+#'
+#' Add the results of a match to an AFLELO Model
+#'
+#' @param model afelo_model object
+#' @param match aflelo_match object
+#'
+#' @return aflelo_model with ratings updated based on the match
+#' @examples
+#' model <- aflelo_model()
+#' match <- aflelo_match(2000, "R1", "Melbourne", "Adelaide", "M.C.G.",
+#'                       10, 110, 102)
+#' aflelo:::add_match(model, match)
 add_match <- function(model, match) {
+
+    checkmate::assert_class(model, "aflelo_model")
+    checkmate::assert_class(match, "aflelo_match")
 
     if (match$season > model$season) {
         model <- new_season(model)
@@ -96,6 +132,23 @@ add_match <- function(model, match) {
 }
 
 
+#' Calculate new rating
+#'
+#' Calculate new rating for a team based on predicted and real results
+#'
+#' @param model aflelo_model object
+#' @param team name of team to calculate new rating for
+#' @param real_result real result probability
+#' @param pred_result predicted result probability
+#'
+#' @return New rating value for the team
+#' @examples
+#' model <- aflelo_model()
+#' match <- aflelo_match(2000, "R1", "Melbourne", "Adelaide", "M.C.G.",
+#'                       10, 110, 102)
+#' real_result <- aflelo:::convert_margin(model, match$real_margin)
+#' pred_result <- aflelo:::convert_margin(model, match$pred_margin)
+#' aflelo:::calc_new_rating(model, "Melbourne", real_result, pred_result)
 calc_new_rating <- function(model, team, real_result, pred_result) {
     checkmate::assert_class(model, "aflelo_model")
     checkmate::assert_character(team, len = 1)
