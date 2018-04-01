@@ -96,11 +96,9 @@ add_match <- function(model, match) {
     new_away_rating <- calc_new_rating(model, match$away, 1 - real_result,
                                        1 - pred_result)
 
-    home_points <- 0
-    away_points <- 0
     if (!(match$round %in% c("QF", "EF", "SF", "PF", "GF"))) {
-        home_total <- match$home_total
-        away_total <- match$away_total
+        home_points <- 0
+        away_points <- 0
         if (match$real_margin > 0) {
             home_points <- 4
         } else if (match$real_margin < 0) {
@@ -109,15 +107,15 @@ add_match <- function(model, match) {
             home_points <- 2
             away_points <- 2
         }
-    } else {
-        home_total <- 0
-        away_total <- 0
+
+        model <- update_ladder(model, match$home, home_points, match$home_total,
+                               match$away_total)
+        model <- update_ladder(model, match$away, away_points, match$away_total,
+                               match$home_total)
     }
 
-    model <- update_rating(model, match$home, new_home_rating, home_points,
-                           home_total, away_total)
-    model <- update_rating(model, match$away, new_away_rating, away_points,
-                           away_total, home_total)
+    model <- update_rating(model, match$home, new_home_rating)
+    model <- update_rating(model, match$away, new_away_rating)
 
     model$match_history <- rbind(model$match_history,
                                  data.frame(Season = model$season,

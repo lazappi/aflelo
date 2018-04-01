@@ -14,9 +14,11 @@ new_aflelo_model <- function(params = new_aflelo_params()) {
 
     teams <- sort(unique(matches$HomeTeam)[1:16])
 
-    ratings <- data.frame(Team = teams, Rating = 1500, Points = 0, PtsFor = 0,
-                          PtsAgainst = 0, Percentage = 0,
+    ratings <- data.frame(Team = teams, Rating = 1500,
                           stringsAsFactors = FALSE)
+
+    ladder <- data.frame(Team = teams, Points = 0, PtsFor = 0, PtsAgainst = 0,
+                         Percentage = 0, stringsAsFactors = FALSE)
 
     rating_history <- matrix(, nrow = 16, ncol = 0, dimnames = list(teams))
     mode(rating_history) <- "numeric"
@@ -25,6 +27,7 @@ new_aflelo_model <- function(params = new_aflelo_params()) {
         list(
             params = params,
             ratings = ratings,
+            ladder = ladder,
             season = 1997,
             round = "Preseason",
             distances = distances,
@@ -53,7 +56,8 @@ new_aflelo_model <- function(params = new_aflelo_params()) {
 validate_aflelo_model <- function(model) {
     checkmate::assert_class(model, "aflelo_model")
     validate_aflelo_params(model$params)
-    checkmate::assert_data_frame(model$ratings, ncol = 6)
+    checkmate::assert_data_frame(model$ratings, ncol = 2)
+    checkmate::assert_data_frame(model$ladder, ncol = 5)
     checkmate::assert_int(model$season, 2000)
     checkmate::assert_character(model$round, len = 1)
     checkmate::assert_matrix(model$distances, mode = "numeric",
@@ -127,9 +131,29 @@ print.aflelo_model <- function(x, ...) {
     cat(crayon::bold("Ratings"), "\n")
     for (i in seq_len(nrow(ratings))) {
         cat(ratings[i, "Team"], strrep(" ", ratings[i, "Gap"]),
-            ratings[i, "RatingStr"], "\t",
-            ratings[i, "Points"], "\t",
-            paste0(round(ratings[i, "Percentage"], 2), "%"), "\n")
+            ratings[i, "RatingStr"], "\n")
+    }
+    cat("\n")
+
+    ladder <- x$ladder
+    ladder <- ladder[order(ladder$Points, ladder$Percentage,
+                           decreasing = TRUE), ]
+    ladder$Gap <- (max(nchar(ladder$Team)) + 2) - nchar(ladder$Team)
+    ladder$PointsStr <- ladder$Points
+    ladder$PointsStr[1:8] <- crayon::green(ladder$PointsStr[1:8])
+    ladder$PointsStr[9:nrow(ladder)] <- crayon::red(ladder$PointsStr[9:nrow(ladder)])
+    ladder$PerStr <- round(ladder$Percentage, 2)
+    ladder$PerStr <- paste(ladder$PerStr, "%")
+    is_pos <- ladder$Percentage > 100
+    ladder$PerStr[is_pos] <- crayon::green(ladder$PerStr[is_pos])
+    is_neg <- ladder$Percentage < 100
+    ladder$PerStr[is_neg] <- crayon::red(ladder$PerStr[is_neg])
+    ladder$PerStr[is_neg] <- paste0(" ", ladder$PerStr[is_neg])
+    cat(crayon::bold("Ladder"), "\n")
+    for (i in seq_len(nrow(ladder))) {
+        cat(ladder[i, "Team"], strrep(" ", ladder[i, "Gap"]),
+            ladder[i, "PointsStr"], "\t",
+            ladder[i, "PerStr"], "\n")
     }
     cat("\n")
 
@@ -173,36 +197,57 @@ update_ratings <- function(model, new_ratings) {
 
 #' Update rating
 #'
-#' Update rating information for a single team in an AFLELO Model
+#' Update rating for a single team in an AFLELO Model
 #'
 #' @param model aflelo_model to update
 #' @param team name of team to update
 #' @param new_rating new rating value
-#' @param points number of premiership points to add
-#' @param pts_for number of points scored by the team
-#' @param pts_against number of points scored against the team
 #'
 #' @return afelo_object with updated rating
 #' @examples
 #' model <- aflelo_model()
-#' aflelo:::update_rating(model, "Richmond", 1600, 4, 110, 100)
+#' aflelo:::update_rating(model, "Richmond", 1600)
 update_rating <- function(model, team, new_rating, points, pts_for,
                           pts_against) {
     checkmate::assert_class(model, "aflelo_model")
     checkmate::check_character(team, len = 1)
     checkmate::assert_number(new_rating, lower = 0, finite = TRUE)
+
+    team_idx <- which(model$ratings$Team == team)
+    model$ratings$Rating[team_idx] <- new_rating
+
+    validate_aflelo_model(model)
+}
+
+
+#' Update ladder
+#'
+#' Update ladder information for a single team in an AFLELO Model
+#'
+#' @param model aflelo_model to update
+#' @param team name of team to update
+#' @param points number of premiership points to add
+#' @param pts_for number of points scored by the team
+#' @param pts_against number of points scored against the team
+#'
+#' @return afelo_object with updated ladder
+#' @examples
+#' model <- aflelo_model()
+#' aflelo:::update_ladder(model, "Richmond", 4, 110, 100)
+update_ladder <- function(model, team, points, pts_for, pts_against) {
+    checkmate::assert_class(model, "aflelo_model")
+    checkmate::check_character(team, len = 1)
     checkmate::assert_int(points, lower = 0, upper = 4)
     checkmate::assert_int(pts_for, lower = 0)
     checkmate::assert_int(pts_against, lower = 0)
 
-    team_idx <- which(model$ratings$Team == team)
-    model$ratings$Rating[team_idx] <- new_rating
-    model$ratings$Points[team_idx] <- model$ratings$Points[team_idx] + points
-    model$ratings$PtsFor[team_idx] <- model$ratings$PtsFor[team_idx] + pts_for
-    model$ratings$PtsAgainst[team_idx] <- model$ratings$PtsAgains[team_idx] +
-                                            pts_against
-    model$ratings$Percentage[team_idx] <- (model$ratings$PtsFor[team_idx] /
-                                          model$ratings$PtsAgainst[team_idx]) *
+    team_idx <- which(model$ladder$Team == team)
+    model$ladder$Points[team_idx] <- model$ladder$Points[team_idx] + points
+    model$ladder$PtsFor[team_idx] <- model$ladder$PtsFor[team_idx] + pts_for
+    model$ladder$PtsAgainst[team_idx] <- model$ladder$PtsAgains[team_idx] +
+                                           pts_against
+    model$ladder$Percentage[team_idx] <- (model$ladder$PtsFor[team_idx] /
+                                          model$ladder$PtsAgainst[team_idx]) *
                                           100
 
     validate_aflelo_model(model)
@@ -257,11 +302,14 @@ add_team  <- function(model, team) {
 
     model$ratings <- rbind(model$ratings,
                            data.frame(Team = team,
-                                      Rating = model$params$new_team_rating,
-                                      Points = 0,
-                                      PtsFor = 0,
-                                      PtsAgainst = 0,
-                                      Percentage = 0))
+                                      Rating = model$params$new_team_rating))
+
+    model$ladder <- rbind(model$ladder,
+                          data.frame(Team = team,
+                                     Points = 0,
+                                     PtsFor = 0,
+                                     PtsAgainst = 0,
+                                     Percentage = 0))
 
     team_names <- rownames(model$rating_history)
     model$rating_history <- rbind(model$rating_history,
@@ -297,10 +345,10 @@ new_season <- function(model) {
 
     model <- update_ratings(model, new_ratings)
 
-    model$ratings$Points <- 0
-    model$ratings$PtsFor <- 0
-    model$ratings$PtsAgainst <- 0
-    model$ratings$Percentage <- 0
+    model$ladder$Points <- 0
+    model$ladder$PtsFor <- 0
+    model$ladder$PtsAgainst <- 0
+    model$ladder$Percentage <- 0
 
     if (new_season == 2011) {
         model <- add_team(model, "Gold Coast")

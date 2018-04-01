@@ -87,7 +87,7 @@ simulate_matches <- function(model, matches, n = 10000, n_cores = 1, seed = 1) {
             sim_model <- add_match(sim_model, match)
         }
 
-        sim_model$ratings
+        data.frame(sim_model$ratings, sim_model$ladder[, -1])
     }
 
     close(pb)
