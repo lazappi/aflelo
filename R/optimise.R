@@ -60,17 +60,54 @@ mutate_params <- function(params, prob = 0.2) {
     for (param in c("new_team_rating", "new_season_adjustment", "hga_alpha",
                     "hga_beta", "pred_p", "adjust_k_early", "adjust_k_normal",
                     "adjust_k_finals")) {
+
         mutate <- rbinom(1, 1, prob) == 1
 
         if (mutate) {
+
+            max <- Inf
+            if (param %in% c("new_season_adjustment", "pred_p")) {
+                max <- 1
+            }
+
             multiplier <- rnorm(1, mean = 1, sd = 0.1)
-            params[[param]] <- params[[param]] * multiplier
+            new_value <-  squeeze_value(params[[param]] * multiplier, 0, max)
+            params[[param]] <- new_value
         }
     }
 
     validate_aflelo_params(params)
 }
 
+
+#' Squeeze value
+#'
+#' Force a value to be within a range
+#'
+#' @param value value to squeeze
+#' @param lower lower bound
+#' @param upper upper bound
+#'
+#' @return squeezed value
+#' @examples
+#' aflelo::squeeze_value(10, 0, 10)
+#' aflelo::squeeze_value(10, 0, 5)
+#' aflelo::squeeze_value(10, 15, 20)
+squeeze_value <- function(value, lower, upper) {
+    checkmate::assert_number(value)
+    checkmate::assert_number(lower, upper = upper)
+    checkmate::assert_number(upper, lower = lower)
+
+    if (value < lower) {
+        return(lower)
+    }
+
+    if (value > upper) {
+        return(upper)
+    }
+
+    return(value)
+}
 
 #' Breed AFLELO Params
 #'
