@@ -4,10 +4,12 @@
 \alias{breed_params}
 \title{Breed AFLELO Params}
 \usage{
-breed_params(population, n)
+breed_params(population, fitness, n)
 }
 \arguments{
 \item{population}{list of aflelo_params}
+
+\item{fitness}{vector giving the fitness of each aflelo_params}
 
 \item{n}{size of new population}
 }

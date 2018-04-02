@@ -5,8 +5,7 @@
 \title{Optimise AFLELO Params}
 \usage{
 optimise_params(matches, start_eval = 2000, end_eval = 2016, n = 100,
-  top = 10, prop_new = 0.1, generations = 10, pred_weight = 0.8,
-  n_cores = 1)
+  prop_new = 0.1, generations = 10, pred_weight = 0.8, n_cores = 1)
 }
 \arguments{
 \item{matches}{data.frame of matches to use}
@@ -16,8 +15,6 @@ optimise_params(matches, start_eval = 2000, end_eval = 2016, n = 100,
 \item{end_eval}{end season for calculating fitness}
 
 \item{n}{population size}
-
-\item{top}{DESCRIPTION.}
 
 \item{prop_new}{proportion of new individuals added at each generation}
 

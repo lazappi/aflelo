@@ -55,7 +55,7 @@ generate_params <- function() {
 #' aflelo:::mutate_params(params)
 mutate_params <- function(params, prob = 0.2) {
     checkmate::assert_class(params, "aflelo_params")
-    checkmate::assert_number(prop, lower = 0, upper = 1)
+    checkmate::assert_number(prob, lower = 0, upper = 1)
 
     for (param in c("new_team_rating", "new_season_adjustment", "hga_alpha",
                     "hga_beta", "pred_p", "adjust_k_early", "adjust_k_normal",
@@ -78,20 +78,27 @@ mutate_params <- function(params, prob = 0.2) {
 #' population
 #'
 #' @param population list of aflelo_params
+#' @param fitness vector giving the fitness of each aflelo_params
 #' @param n size of new population
 #'
 #' @return list of alfelo_params
 #' @examples
 #' population <- aflelo::new_population(5)
 #' aflelo::breed_params(population, 5)
-breed_params <- function(population, n) {
+breed_params <- function(population, fitness, n) {
     checkmate::assert_list(population, types = "aflelo_params")
+    checkmate::assert_numeric(fitness, len = length(population),
+                              any.missing = FALSE)
     checkmate::assert_int(n, lower = 1)
+
+    weights <- fitness / sum(fitness)
 
     new_pop <- lapply(seq_len(n), function(x) {
 
-        params1 <- population[[sample(seq_along(population), 1)]]
-        params2 <- population[[sample(seq_along(population), 1)]]
+        idx1 <- sample(seq_along(population), 1, prob = weights)
+        idx2 <- sample(seq_along(population), 1, prob = weights)
+        params1 <- population[[idx1]]
+        params2 <- population[[idx2]]
 
         params <- aflelo_params(
             new_team_rating = ifelse(rbinom(1, 1, 0.5),
@@ -202,7 +209,6 @@ evaluate_population <- function(population, matches, start_eval = 2000,
 #' @param start_eval start season for calculating fitness
 #' @param end_eval end season for calculating fitness
 #' @param n population size
-#' @param top DESCRIPTION.
 #' @param prop_new proportion of new individuals added at each generation
 #' @param generations number of generations
 #' @param pred_weight weight given to prediction accuracy when calculating
@@ -216,7 +222,7 @@ evaluate_population <- function(population, matches, start_eval = 2000,
 #' optimise_params(matches, start_eval = 1997, end_eval = 1998, n = 5,
 #'                 generations = 1)
 optimise_params <- function(matches, start_eval = 2000, end_eval = 2016,
-                            n = 100, top = 10, prop_new = 0.1, generations = 10,
+                            n = 100, prop_new = 0.1, generations = 10,
                             pred_weight = 0.8, n_cores = 1) {
     checkmate::assert_data_frame(matches)
     checkmate::assert_int(start_eval, lower = min(matches$Season))
@@ -233,20 +239,16 @@ optimise_params <- function(matches, start_eval = 2000, end_eval = 2016,
     hall_of_fame <- list()
 
     for (i in seq_len(generations)) {
-        message("Generation ", i, " of ", generations)
+        message("[", Sys.time(), "] ", "Generation ", i, " of ", generations)
         fitness <- evaluate_population(population, matches, start_eval,
                                        end_eval, pred_weight, n_cores)
-        fitness$Individual <- seq_len(nrow(fitness))
-        fitness <- fitness[order(fitness$Fitness, decreasing = TRUE), ]
 
-        top_params <- population[fitness$Individual[seq_len(top)]]
-        top_params_flat <- t(sapply(top_params, unlist))
+        pop_flat <- t(sapply(population, unlist))
 
-        hall_of_fame <- c(hall_of_fame,
-                          list(TopParams = top_params_flat, Fitness = fitness))
+        hall_of_fame[[i]] <- data.frame(pop_flat, fitness, row.names = NULL)
 
         new_pop <- new_population(new_n)
-        breed_pop <- breed_params(top_params, n - new_n)
+        breed_pop <- breed_params(population, fitness$Fitness, n - new_n)
         population <- c(breed_pop, new_pop)
 
         message("Prediction    ",
