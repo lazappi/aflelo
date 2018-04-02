@@ -12,20 +12,14 @@ update_rating(model, team, new_rating, points, pts_for, pts_against)
 \item{team}{name of team to update}
 
 \item{new_rating}{new rating value}
-
-\item{points}{number of premiership points to add}
-
-\item{pts_for}{number of points scored by the team}
-
-\item{pts_against}{number of points scored against the team}
 }
 \value{
 afelo_object with updated rating
 }
 \description{
-Update rating information for a single team in an AFLELO Model
+Update rating for a single team in an AFLELO Model
 }
 \examples{
 model <- aflelo_model()
-aflelo:::update_rating(model, "Richmond", 1600, 4, 110, 100)
+aflelo:::update_rating(model, "Richmond", 1600)
 }

@@ -1,4 +1,14 @@
+#' New population
+#'
+#' Randomly generate a population of AFLELO Params
+#'
+#' @param n size of the population
+#'
+#' @return list of aflelo_params objects
+#' @examples
+#' population <- aflelo:::new_population(5)
 new_population <- function(n) {
+    checkmate::assert_int(n, lower = 1)
 
     population <- vector("list", n)
 
@@ -9,21 +19,43 @@ new_population <- function(n) {
     return(population)
 }
 
+
+#' Generate parameters
+#'
+#' Randomly generate a single AFLELO Params
+#'
+#' @return afelo_params object
+#' @examples
+#' aflelo::generate_params()
 generate_params <- function() {
 
     aflelo_params(
-        new_team_rating = runif(1, 800, 1400),
+        new_team_rating       = runif(1, 800, 1400),
         new_season_adjustment = runif(1, 0, 1),
-        hga_alpha = runif(1, 0, 20),
-        hga_beta = runif(1, 0, 20),
-        pred_p = runif(1, 0, 1),
-        adjust_k_early = runif(1, 0, 100),
-        adjust_k_normal = runif(1, 0, 100),
-        adjust_k_finals = runif(1, 0, 100)
+        hga_alpha             = runif(1, 0, 20),
+        hga_beta              = runif(1, 0, 20),
+        pred_p                = runif(1, 0, 0.1),
+        adjust_k_early        = runif(1, 0, 100),
+        adjust_k_normal       = runif(1, 0, 100),
+        adjust_k_finals       = runif(1, 0, 100)
     )
 }
 
-mutate_params <- function(params, prob = 0.1) {
+
+#' Muatate AFLELO Params
+#'
+#' Mutate AFLELO Params
+#'
+#' @param params aflelo_params object to mutate
+#' @param prob probability that an individual parameter is mutated
+#'
+#' @return mutated aflelo_params
+#' @examples
+#' params <- aflelo_params()
+#' aflelo:::mutate_params(params)
+mutate_params <- function(params, prob = 0.2) {
+    checkmate::assert_class(params, "aflelo_params")
+    checkmate::assert_number(prop, lower = 0, upper = 1)
 
     for (param in c("new_team_rating", "new_season_adjustment", "hga_alpha",
                     "hga_beta", "pred_p", "adjust_k_early", "adjust_k_normal",
@@ -39,7 +71,22 @@ mutate_params <- function(params, prob = 0.1) {
     validate_aflelo_params(params)
 }
 
+
+#' Breed AFLELO Params
+#'
+#' Create a new population of AFLELO Params through crossover of an existing
+#' population
+#'
+#' @param population list of aflelo_params
+#' @param n size of new population
+#'
+#' @return list of alfelo_params
+#' @examples
+#' population <- aflelo::new_population(5)
+#' aflelo::breed_params(population, 5)
 breed_params <- function(population, n) {
+    checkmate::assert_list(population, types = "aflelo_params")
+    checkmate::assert_int(n, lower = 1)
 
     new_pop <- lapply(seq_len(n), function(x) {
 
@@ -47,19 +94,30 @@ breed_params <- function(population, n) {
         params2 <- population[[sample(seq_along(population), 1)]]
 
         params <- aflelo_params(
-            new_team_rating = mean(c(params1$new_team_rating,
-                                     params2$new_team_rating)),
-            new_season_adjustment = mean(c(params1$new_season_adjustment,
-                                           params2$new_season_adjustment)),
-            hga_alpha = mean(c(params1$hga_alpha, params2$hga_alpha)),
-            hga_beta = mean(c(params1$hga_beta, params2$hga_beta)),
-            pred_p = mean(c(params1$pred_p, params2$pred_p)),
-            adjust_k_early = mean(c(params1$adjust_k_early,
-                                    params2$adjust_k_early)),
-            adjust_k_normal = mean(c(params1$adjust_k_normal,
-                                     params2$adjust_k_normal)),
-            adjust_k_finals = mean(c(params1$adjust_k_finals,
-                                     params2$adjust_k_finals))
+            new_team_rating = ifelse(rbinom(1, 1, 0.5),
+                                     params1$new_team_rating,
+                                     params2$new_team_rating),
+            new_season_adjustment = ifelse(rbinom(1, 1, 0.5),
+                                           params1$new_season_adjustment,
+                                           params2$new_season_adjustment),
+            hga_alpha = ifelse(rbinom(1, 1, 0.5),
+                               params1$hga_alpha,
+                               params2$hga_alpha),
+            hga_beta = ifelse(rbinom(1, 1, 0.5),
+                              params1$hga_beta,
+                              params2$hga_beta),
+            pred_p = ifelse(rbinom(1, 1, 0.5),
+                            params1$pred_p,
+                            params2$pred_p),
+            adjust_k_early = ifelse(rbinom(1, 1, 0.5),
+                                    params1$adjust_k_early,
+                                    params2$adjust_k_early),
+            adjust_k_normal = ifelse(rbinom(1, 1, 0.5),
+                                     params1$adjust_k_normal,
+                                     params2$adjust_k_normal),
+            adjust_k_finals = ifelse(rbinom(1, 1, 0.5),
+                                     params1$adjust_k_finals,
+                                     params2$adjust_k_finals)
         )
 
         params <- mutate_params(params)
@@ -68,8 +126,33 @@ breed_params <- function(population, n) {
     return(new_pop)
 }
 
+
+#' Evaluate population
+#'
+#' Evaluate a population of AFLELO Params object
+#'
+#' @param population list of aflelo_params to evaluate
+#' @param matches data.frame of matches for training and evaluation
+#' @param start_eval start season for calculating fitness
+#' @param end_eval end season for calculating fitness
+#' @param pred_weight weight given to prediction accuracy when calculating
+#'        fitness
+#' @param n_cores number of cores to use
+#'
+#' @return data.frame giving the fitness of each aflelo_params
+#' @examples
+#' date("matches")
+#' population <- aflelo::new_population(5)
+#' evaluate_population(population, matches, start_eval = 1997, end_eval = 1998)
 evaluate_population <- function(population, matches, start_eval = 2000,
-                                end_eval = 2016, n_cores = 1) {
+                                end_eval = 2016, pred_weight = 0.8,
+                                n_cores = 1) {
+    checkmate::assert_list(population, types = "aflelo_params")
+    checkmate::assert_data_frame(matches)
+    checkmate::assert_int(start_eval, lower = min(matches$Season))
+    checkmate::assert_int(end_eval, lower = min(matches$Season))
+    checkmate::assert_number(pred_weight, lower = 0, upper = 1)
+    checkmate::assert_int(n_cores, lower = 1)
 
     `%dopar%` <- foreach::`%dopar%`
 
@@ -96,11 +179,11 @@ evaluate_population <- function(population, matches, start_eval = 2000,
         correct <- sign(match_history$Predicted) == sign(match_history$Margin)
         pct_correct <- sum(correct) / nrow(match_history)
 
-        diff <- abs(match_history$Predicted - match_history$Margin)
-        avg_diff <- mean(diff)
+        mae <- mean(abs(match_history$Predicted - match_history$Margin))
 
-        c(PctCorrect = pct_correct, AvgDiff = avg_diff,
-          Fitness = 0.8 * pct_correct + 0.2 * (1 / avg_diff))
+        c(PctCorrect = pct_correct,
+          MarginMAE = mae,
+          Fitness = pred_weight * pct_correct + (1 - pred_weight) * (1 / mae))
     }
 
     close(pb)
@@ -109,17 +192,50 @@ evaluate_population <- function(population, matches, start_eval = 2000,
     return(as.data.frame(fitness))
 }
 
-optimise_params <- function(matches, start_eval = 2000, end_eval = 2016,
-                            n = 100, top = 10, generations = 10, n_cores = 1) {
 
+#' Optimise AFLELO Params
+#'
+#' Attempt to find an optimal set of AFLELO Params using a genetic algorithm
+#'
+#' @param matches data.frame of matches to use
+#' @param matches data.frame of matches for training and evaluation
+#' @param start_eval start season for calculating fitness
+#' @param end_eval end season for calculating fitness
+#' @param n population size
+#' @param top DESCRIPTION.
+#' @param prop_new proportion of new individuals added at each generation
+#' @param generations number of generations
+#' @param pred_weight weight given to prediction accuracy when calculating
+#'        fitness
+#' @param n_cores number of cores to use
+#'
+#' @return list of data.frames describing parameters and fitness, one for each
+#'         generation
+#' @examples
+#' data("matches")
+#' optimise_params(matches, start_eval = 1997, end_eval = 1998, n = 5,
+#'                 generations = 1)
+optimise_params <- function(matches, start_eval = 2000, end_eval = 2016,
+                            n = 100, top = 10, prop_new = 0.1, generations = 10,
+                            pred_weight = 0.8, n_cores = 1) {
+    checkmate::assert_data_frame(matches)
+    checkmate::assert_int(start_eval, lower = min(matches$Season))
+    checkmate::assert_int(end_eval, lower = min(matches$Season))
+    checkmate::assert_int(n, lower = 1)
+    checkmate::assert_number(prop_new, lower = 0, upper = 1)
+    checkmate::assert_int(generations, lower = 1)
+    checkmate::assert_number(pred_weight, lower = 0, upper = 1)
+    checkmate::assert_int(n_cores, lower = 1)
+
+    new_n <- round(n * prop_new)
     population <- new_population(n)
 
     hall_of_fame <- list()
 
     for (i in seq_len(generations)) {
-        message("Generation ", i)
+        message("Generation ", i, " of ", generations)
         fitness <- evaluate_population(population, matches, start_eval,
-                                       end_eval, n_cores)
+                                       end_eval, pred_weight, n_cores)
         fitness$Individual <- seq_len(nrow(fitness))
         fitness <- fitness[order(fitness$Fitness, decreasing = TRUE), ]
 
@@ -129,7 +245,30 @@ optimise_params <- function(matches, start_eval = 2000, end_eval = 2016,
         hall_of_fame <- c(hall_of_fame,
                           list(TopParams = top_params_flat, Fitness = fitness))
 
-        population <- breed_params(top_params, n)
+        new_pop <- new_population(new_n)
+        breed_pop <- breed_params(top_params, n - new_n)
+        population <- c(breed_pop, new_pop)
+
+        message("Prediction    ",
+                "Min: ", round(min(fitness$PctCorrect), 2), ", ",
+                "Median: ", round(median(fitness$PctCorrect), 2), ", ",
+                "Max: ", round(max(fitness$PctCorrect), 2), ", ",
+                "Mean: ", round(mean(fitness$PctCorrect), 2), ", ",
+                "SD: ", round(sd(fitness$PctCorrect), 2))
+
+        message("Margin        ",
+                "Min: ", round(min(fitness$MarginMAE), 2), ", ",
+                "Median: ", round(median(fitness$MarginMAE), 2), ", ",
+                "Max: ", round(max(fitness$MarginMAE), 2), ", ",
+                "Mean: ", round(mean(fitness$MarginMAE), 2), ", ",
+                "SD: ", round(sd(fitness$MarginMAE), 2))
+
+        message("Fitness       ",
+                "Min: ", round(min(fitness$Fitness), 2), ", ",
+                "Median: ", round(median(fitness$Fitness), 2), ", ",
+                "Max: ", round(max(fitness$Fitness), 2), ", ",
+                "Mean: ", round(mean(fitness$Fitness), 2), ", ",
+                "SD: ", round(sd(fitness$Fitness), 2))
     }
 
     return(hall_of_fame)
