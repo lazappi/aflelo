@@ -1,6 +1,6 @@
 Package: aflelo
 Type: Package
-Title: ELO models for AFL
+Title: Elo models for AFL
 Version: 0.1.0
 Date: 2018-04-16
 Authors@R:
