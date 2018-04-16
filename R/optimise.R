@@ -53,7 +53,7 @@ generate_params <- function() {
 #' @examples
 #' params <- aflelo_params()
 #' aflelo:::mutate_params(params)
-mutate_params <- function(params, prob = 0.2) {
+mutate_params <- function(params, prob = 0.1) {
     checkmate::assert_class(params, "aflelo_params")
     checkmate::assert_number(prob, lower = 0, upper = 1)
 
@@ -138,31 +138,47 @@ breed_params <- function(population, fitness, n) {
         params2 <- population[[idx2]]
 
         params <- aflelo_params(
-            new_team_rating = ifelse(rbinom(1, 1, 0.5),
-                                     params1$new_team_rating,
-                                     params2$new_team_rating),
-            new_season_adjustment = ifelse(rbinom(1, 1, 0.5),
-                                           params1$new_season_adjustment,
-                                           params2$new_season_adjustment),
-            hga_alpha = ifelse(rbinom(1, 1, 0.5),
-                               params1$hga_alpha,
-                               params2$hga_alpha),
-            hga_beta = ifelse(rbinom(1, 1, 0.5),
-                              params1$hga_beta,
-                              params2$hga_beta),
-            pred_p = ifelse(rbinom(1, 1, 0.5),
-                            params1$pred_p,
-                            params2$pred_p),
-            adjust_k_early = ifelse(rbinom(1, 1, 0.5),
-                                    params1$adjust_k_early,
-                                    params2$adjust_k_early),
-            adjust_k_normal = ifelse(rbinom(1, 1, 0.5),
-                                     params1$adjust_k_normal,
-                                     params2$adjust_k_normal),
-            adjust_k_finals = ifelse(rbinom(1, 1, 0.5),
-                                     params1$adjust_k_finals,
-                                     params2$adjust_k_finals)
+            new_team_rating = mean(params1$new_team_rating,
+                                   params2$new_team_rating),
+            new_season_adjustment = mean(params1$new_season_adjustment,
+                                         params2$new_season_adjustment),
+            hga_alpha = mean(params1$hga_alpha, params2$hga_alpha),
+            hga_beta = mean(params1$hga_beta, params2$hga_beta),
+            pred_p = mean(params1$pred_p, params2$pred_p),
+            adjust_k_early = mean(params1$adjust_k_early,
+                                  params2$adjust_k_early),
+            adjust_k_normal = mean(params1$adjust_k_normal,
+                                   params2$adjust_k_normal),
+            adjust_k_finals = mean(params1$adjust_k_finals,
+                                   params2$adjust_k_finals)
         )
+
+        # params <- aflelo_params(
+        #     new_team_rating = ifelse(rbinom(1, 1, 0.5),
+        #                              params1$new_team_rating,
+        #                              params2$new_team_rating),
+        #     new_season_adjustment = ifelse(rbinom(1, 1, 0.5),
+        #                                    params1$new_season_adjustment,
+        #                                    params2$new_season_adjustment),
+        #     hga_alpha = ifelse(rbinom(1, 1, 0.5),
+        #                        params1$hga_alpha,
+        #                        params2$hga_alpha),
+        #     hga_beta = ifelse(rbinom(1, 1, 0.5),
+        #                       params1$hga_beta,
+        #                       params2$hga_beta),
+        #     pred_p = ifelse(rbinom(1, 1, 0.5),
+        #                     params1$pred_p,
+        #                     params2$pred_p),
+        #     adjust_k_early = ifelse(rbinom(1, 1, 0.5),
+        #                             params1$adjust_k_early,
+        #                             params2$adjust_k_early),
+        #     adjust_k_normal = ifelse(rbinom(1, 1, 0.5),
+        #                              params1$adjust_k_normal,
+        #                              params2$adjust_k_normal),
+        #     adjust_k_finals = ifelse(rbinom(1, 1, 0.5),
+        #                              params1$adjust_k_finals,
+        #                              params2$adjust_k_finals)
+        #)
 
         params <- mutate_params(params)
     })
@@ -227,13 +243,21 @@ evaluate_population <- function(population, matches, start_eval = 2000,
 
         c(PctCorrect = pct_correct,
           MarginMAE = mae,
-          Fitness = pred_weight * pct_correct + (1 - pred_weight) * (1 / mae))
+          FitnessRaw = pred_weight * pct_correct + (1 - pred_weight) * (1 / mae))
     }
 
     close(pb)
     snow::stopCluster(cl)
 
-    return(as.data.frame(fitness))
+    fitness <- as.data.frame(fitness)
+
+    mae_floor <- floor(min(fitness$MarginMAE))
+    fitness$MAEAdjusted <- fitness$MarginMAE / mae_floor
+
+    fitness$Fitness <- pred_weight * fitness$PctCorrect +
+        (1 - pred_weight) * (1 / fitness$MAEAdjusted)
+
+    return(fitness)
 }
 
 
@@ -284,7 +308,11 @@ optimise_params <- function(matches, start_eval = 2000, end_eval = 2016,
 
         hall_of_fame[[i]] <- data.frame(pop_flat, fitness, row.names = NULL)
 
-        new_pop <- new_population(new_n)
+        if (new_n > 0) {
+            new_pop <- new_population(new_n)
+        } else {
+            new_pop <- list()
+        }
         breed_pop <- breed_params(population, fitness$Fitness, n - new_n)
         population <- c(breed_pop, new_pop)
 
