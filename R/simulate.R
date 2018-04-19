@@ -61,8 +61,9 @@ simulate_matches <- function(model, matches, n = 10000, n_cores = 1, seed = 1) {
                 sim_model$round <- round
             }
 
-            pred_result <- predict_result(sim_model, home, away, ground)
-            pred_margin <- predict_margin(sim_model, pred_result)
+            match_pred  <- predict_match(sim_model, home, away, ground)
+            pred_result <- match_pred[1]
+            pred_margin <- match_pred[2]
 
             real_margin <- round(stats::rnorm(1, mean = pred_margin,
                                               sd = sim_model$params$sim_sigma))

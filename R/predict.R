@@ -42,6 +42,36 @@ calc_hga <- function(model, home, away, ground) {
 }
 
 
+#' Predict match
+#'
+#' Predict the result and margin of a match between two teams at a particular
+#' ground
+#'
+#' @param model afelo_model object
+#' @param home name of the home team
+#' @param away name of the away team
+#' @param ground name of the ground
+#'
+#' @return Probability of victory and margin for the home team
+#'
+#' @examples
+#' model <- aflelo_model()
+#' predict_match(model, "Brisbane", "Western Bulldogs", "Gabba")
+#'
+#' @export
+predict_match <- function(model, home, away, ground) {
+    checkmate::assert_class(model, "aflelo_model")
+    checkmate::assert_character(home, len = 1)
+    checkmate::assert_character(away, len = 1)
+    checkmate::assert_character(ground, len = 1)
+
+    pred_result <- predict_result(model, home, away, ground)
+    pred_margin <- predict_margin(model, pred_result)
+
+    return(c(Result = pred_result, Margin = pred_margin))
+}
+
+
 #' Predict result
 #'
 #' Predict the result of a match between two teams at a particular ground
