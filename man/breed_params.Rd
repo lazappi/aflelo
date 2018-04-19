@@ -21,6 +21,6 @@ Create a new population of AFLELO Params through crossover of an existing
 population
 }
 \examples{
-population <- aflelo::new_population(5)
-aflelo::breed_params(population, 5)
+population <- aflelo:::new_population(5)
+aflelo:::breed_params(population, rep(0.5, 5), 5)
 }

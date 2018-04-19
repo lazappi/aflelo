@@ -207,8 +207,7 @@ update_ratings <- function(model, new_ratings) {
 #' @examples
 #' model <- aflelo_model()
 #' aflelo:::update_rating(model, "Richmond", 1600)
-update_rating <- function(model, team, new_rating, points, pts_for,
-                          pts_against) {
+update_rating <- function(model, team, new_rating) {
     checkmate::assert_class(model, "aflelo_model")
     checkmate::check_character(team, len = 1)
     checkmate::assert_number(new_rating, lower = 0, finite = TRUE)

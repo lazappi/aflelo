@@ -8,7 +8,7 @@ optimise_params(matches, start_eval = 2000, end_eval = 2016, n = 100,
   prop_new = 0.1, generations = 10, pred_weight = 0.8, n_cores = 1)
 }
 \arguments{
-\item{matches}{data.frame of matches to use}
+\item{matches}{data.frame of matches for training and evaluation}
 
 \item{start_eval}{start season for calculating fitness}
 
@@ -24,8 +24,6 @@ optimise_params(matches, start_eval = 2000, end_eval = 2016, n = 100,
 fitness}
 
 \item{n_cores}{number of cores to use}
-
-\item{matches}{data.frame of matches for training and evaluation}
 }
 \value{
 list of data.frames describing parameters and fitness, one for each
@@ -38,4 +36,5 @@ Attempt to find an optimal set of AFLELO Params using a genetic algorithm
 data("matches")
 optimise_params(matches, start_eval = 1997, end_eval = 1998, n = 5,
                 generations = 1)
+
 }

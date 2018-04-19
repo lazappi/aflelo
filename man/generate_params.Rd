@@ -7,11 +7,12 @@
 generate_params()
 }
 \value{
-afelo_params object
+aflelo_params object
 }
 \description{
 Randomly generate a single AFLELO Params
 }
 \examples{
-aflelo::generate_params()
+aflelo:::generate_params()
+
 }

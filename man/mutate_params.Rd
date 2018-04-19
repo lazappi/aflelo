@@ -4,7 +4,7 @@
 \alias{mutate_params}
 \title{Muatate AFLELO Params}
 \usage{
-mutate_params(params, prob = 0.2)
+mutate_params(params, prob = 0.1)
 }
 \arguments{
 \item{params}{aflelo_params object to mutate}
@@ -20,4 +20,5 @@ Mutate AFLELO Params
 \examples{
 params <- aflelo_params()
 aflelo:::mutate_params(params)
+
 }

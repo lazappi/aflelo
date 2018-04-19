@@ -24,9 +24,12 @@ new_population <- function(n) {
 #'
 #' Randomly generate a single AFLELO Params
 #'
-#' @return afelo_params object
+#' @return aflelo_params object
+#'
 #' @examples
-#' aflelo::generate_params()
+#' aflelo:::generate_params()
+#'
+#' @importFrom stats runif
 generate_params <- function() {
 
     aflelo_params(
@@ -50,9 +53,12 @@ generate_params <- function() {
 #' @param prob probability that an individual parameter is mutated
 #'
 #' @return mutated aflelo_params
+#'
 #' @examples
 #' params <- aflelo_params()
 #' aflelo:::mutate_params(params)
+#'
+#' @importFrom stats rbinom rnorm
 mutate_params <- function(params, prob = 0.1) {
     checkmate::assert_class(params, "aflelo_params")
     checkmate::assert_number(prob, lower = 0, upper = 1)
@@ -90,9 +96,9 @@ mutate_params <- function(params, prob = 0.1) {
 #'
 #' @return squeezed value
 #' @examples
-#' aflelo::squeeze_value(10, 0, 10)
-#' aflelo::squeeze_value(10, 0, 5)
-#' aflelo::squeeze_value(10, 15, 20)
+#' aflelo:::squeeze_value(10, 0, 10)
+#' aflelo:::squeeze_value(10, 0, 5)
+#' aflelo:::squeeze_value(10, 15, 20)
 squeeze_value <- function(value, lower, upper) {
     checkmate::assert_number(value)
     checkmate::assert_number(lower, upper = upper)
@@ -109,6 +115,7 @@ squeeze_value <- function(value, lower, upper) {
     return(value)
 }
 
+
 #' Breed AFLELO Params
 #'
 #' Create a new population of AFLELO Params through crossover of an existing
@@ -120,8 +127,8 @@ squeeze_value <- function(value, lower, upper) {
 #'
 #' @return list of alfelo_params
 #' @examples
-#' population <- aflelo::new_population(5)
-#' aflelo::breed_params(population, 5)
+#' population <- aflelo:::new_population(5)
+#' aflelo:::breed_params(population, rep(0.5, 5), 5)
 breed_params <- function(population, fitness, n) {
     checkmate::assert_list(population, types = "aflelo_params")
     checkmate::assert_numeric(fitness, len = length(population),
@@ -201,9 +208,10 @@ breed_params <- function(population, fitness, n) {
 #'
 #' @return data.frame giving the fitness of each aflelo_params
 #' @examples
-#' date("matches")
-#' population <- aflelo::new_population(5)
+#' data("matches")
+#' population <- aflelo:::new_population(5)
 #' evaluate_population(population, matches, start_eval = 1997, end_eval = 1998)
+#' @export
 evaluate_population <- function(population, matches, start_eval = 2000,
                                 end_eval = 2016, pred_weight = 0.8,
                                 n_cores = 1) {
@@ -275,7 +283,6 @@ evaluate_population <- function(population, matches, start_eval = 2000,
 #'
 #' Attempt to find an optimal set of AFLELO Params using a genetic algorithm
 #'
-#' @param matches data.frame of matches to use
 #' @param matches data.frame of matches for training and evaluation
 #' @param start_eval start season for calculating fitness
 #' @param end_eval end season for calculating fitness
@@ -288,10 +295,14 @@ evaluate_population <- function(population, matches, start_eval = 2000,
 #'
 #' @return list of data.frames describing parameters and fitness, one for each
 #'         generation
+#'
 #' @examples
 #' data("matches")
 #' optimise_params(matches, start_eval = 1997, end_eval = 1998, n = 5,
 #'                 generations = 1)
+#'
+#' @importFrom stats median sd
+#' @export
 optimise_params <- function(matches, start_eval = 2000, end_eval = 2016,
                             n = 100, prop_new = 0.1, generations = 10,
                             pred_weight = 0.8, n_cores = 1) {

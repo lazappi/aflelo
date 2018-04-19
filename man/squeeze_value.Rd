@@ -20,7 +20,7 @@ squeezed value
 Force a value to be within a range
 }
 \examples{
-aflelo::squeeze_value(10, 0, 10)
-aflelo::squeeze_value(10, 0, 5)
-aflelo::squeeze_value(10, 15, 20)
+aflelo:::squeeze_value(10, 0, 10)
+aflelo:::squeeze_value(10, 0, 5)
+aflelo:::squeeze_value(10, 15, 20)
 }

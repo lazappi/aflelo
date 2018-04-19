@@ -4,7 +4,7 @@
 \alias{update_rating}
 \title{Update rating}
 \usage{
-update_rating(model, team, new_rating, points, pts_for, pts_against)
+update_rating(model, team, new_rating)
 }
 \arguments{
 \item{model}{aflelo_model to update}

@@ -28,7 +28,7 @@ data.frame giving the fitness of each aflelo_params
 Evaluate a population of AFLELO Params object
 }
 \examples{
-date("matches")
-population <- aflelo::new_population(5)
+data("matches")
+population <- aflelo:::new_population(5)
 evaluate_population(population, matches, start_eval = 1997, end_eval = 1998)
 }
