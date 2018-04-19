@@ -251,11 +251,21 @@ evaluate_population <- function(population, matches, start_eval = 2000,
 
     fitness <- as.data.frame(fitness)
 
-    mae_floor <- floor(min(fitness$MarginMAE))
-    fitness$MAEAdjusted <- fitness$MarginMAE / mae_floor
+    #mae_floor <- floor(min(fitness$MarginMAE))
+    #fitness$MAEAdjusted <- fitness$MarginMAE / mae_floor
+
+    #fitness$Fitness <- pred_weight * fitness$PctCorrect +
+    #    (1 - pred_weight) * (1 / fitness$MAEAdjusted)
+
+    mae <- fitness$MarginMAE
+    mae[mae > 60] <- 60
+    mae[mae < 20] <- 20
+    mae_adj <- (mae - 20) / 40
+
+    fitness$MAEAdjusted <- mae_adj
 
     fitness$Fitness <- pred_weight * fitness$PctCorrect +
-        (1 - pred_weight) * (1 / fitness$MAEAdjusted)
+        (1 - pred_weight) * (1 - mae_adj)
 
     return(fitness)
 }
